@@ -12,7 +12,7 @@ export default function Index() {
         style={styles.button}
         onPress={() => router.push("./login")}
       >
-        <Text style={styles.buttonText}>Login</Text>
+        <Text style={styles.buttonText}>SignIn</Text>
       </TouchableOpacity>
     </View>
   );

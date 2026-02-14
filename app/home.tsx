@@ -1,9 +1,11 @@
 import { colors, spacing, typography } from "@/constants/theme";
+import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -15,20 +17,44 @@ export default function HomeScreen() {
   }, []);
 
   const loadPilgrimData = async () => {
-    try {
-      const userId = await AsyncStorage.getItem("user_id");
-      const userName = await AsyncStorage.getItem("user_name");
-      if (!userId) {
-        router.replace("/");
-        return;
-      }
-      setPilgrimData({ id: userId, name: userName || "Pilgrim" });
-    } catch (error) {
-      console.error("Error loading pilgrim data:", error);
-    } finally {
-      setLoading(false);
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+
+if (!userData.user) {
+  router.replace("/");
+  return;
+}
+
+const email = userData.user.email;
+
+
+    const { data, error } = await supabase
+      .from("pilgrims")
+      .select("nusuk_id, full_name")
+      .eq("email", email)
+      .maybeSingle()
+
+console.log("USER EMAIL:", email);
+console.log("DB DATA:", data);
+console.log("DB ERROR:", error);
+
+    if (error || !data) {
+      router.replace("/");
+      return;
     }
-  };
+
+    setPilgrimData({
+      id: data.nusuk_id,
+      name: data.full_name,
+    });
+
+  } catch (error) {
+    console.error("Error loading pilgrim data:", error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleLogout = () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -36,10 +62,12 @@ export default function HomeScreen() {
       {
         text: "Logout",
         onPress: async () => {
-          await AsyncStorage.removeItem("user_id");
-          await AsyncStorage.removeItem("user_name");
-          router.replace("/");
-        },
+  await supabase.auth.signOut(); //  مهم
+  await AsyncStorage.removeItem("user_id");
+  await AsyncStorage.removeItem("user_name");
+  router.replace("/");
+},
+
       },
     ]);
   };

@@ -1,54 +1,79 @@
 import { colors, radius, spacing, typography } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Alert, Text, TouchableOpacity, View } from "react-native";
+
 
 export default function LoginScreen() {
   const router = useRouter();
   const [permission, requestPermission] = useCameraPermissions();
   const [showScanner, setShowScanner] = useState(false);
+  const [scanned, setScanned] = useState(false);
 
-  // ميزتك الجديدة: معالجة الباركود والحفظ في سوبابيس
-  const handleBarCodeScanned = async ({ data }: { data: string }) => {
-    setShowScanner(false);
-    try {
-      // 1. تحويل نص الباركود إلى JSON
-      const pilgrimData = JSON.parse(data);
+useEffect(() => {
+  setScanned(false);
+}, []);
 
-      // 2. مزامنة البيانات مع جدول الحجاج
-      const { error } = await supabase.from("pilgrims").upsert(
-        {
-          nusuk_id: pilgrimData.id,
-          full_name: pilgrimData.full_name,
-          nationality: pilgrimData.nationality,
-          medical_info: pilgrimData.medical_info,
-          accommodation: pilgrimData.accommodation,
-          transport: pilgrimData.transport,
-          service_provider: pilgrimData.service_provider,
-          last_login: new Date(),
-        },
-        { onConflict: "nusuk_id" },
-      );
 
-      if (error) throw error;
+  // ✅ التعديل هنا فقط: منع أي تعامل مع DB قبل OTP
+const handleBarCodeScanned = async ({ data }: { data: string }) => {
+  
+  if (scanned) return;
+ setScanned(true);
 
-      // 3. حفظ المعرف والاسم محلياً
-      await AsyncStorage.setItem("user_id", pilgrimData.id);
-      await AsyncStorage.setItem("user_name", pilgrimData.full_name);
 
-      // الانتقال لصفحة البيت
-      router.replace("/home");
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Invalid barcode or connection failed");
+  setShowScanner(false);
+
+  let pilgrimData;
+
+  try {
+    // نحول QR إلى JSON
+    pilgrimData = JSON.parse(data);
+  } catch {
+    Alert.alert("Error", "QR code is not valid.");
+    return;
+  }
+
+  // نتأكد أن الإيميل موجود
+  if (!pilgrimData.email) {
+    Alert.alert("Error", "QR code does not contain an email.");
+    return;
+  }
+
+  try {
+    // إرسال رمز التحقق إلى الإيميل
+    const { error } = await supabase.auth.signInWithOtp({
+      email: pilgrimData.email,
+      options: {
+        shouldCreateUser: true,
+      },
+    });
+
+    if (error) {
+      Alert.alert("Error", error.message);
+      return;
     }
-  };
 
-  // واجهة الكاميرا لمسح البطاقة
+    // الانتقال لصفحة إدخال الرمز
+    router.replace({
+  pathname: "/otp-verification",
+  params: {
+    email: pilgrimData.email,
+    data: JSON.stringify(pilgrimData),
+  },
+});
+
+  } catch (err: any) {
+    Alert.alert("Error", "Something went wrong. Please try again.");
+  }
+};
+
+
+
+  // --- بقية الكود (واجهة الكاميرا والـ UI) يبقى كما هو تماماً دون تغيير ---
   if (showScanner) {
     if (!permission?.granted) {
       return (
@@ -113,13 +138,15 @@ export default function LoginScreen() {
         </View>
       );
     }
+
     return (
       <View style={{ flex: 1, backgroundColor: "black" }}>
-        <CameraView
-          style={{ flex: 1 }}
-          onBarcodeScanned={handleBarCodeScanned}
-          barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
-        />
+       <CameraView
+  style={{ flex: 1 }}
+  onBarcodeScanned={scanned ? undefined : handleBarCodeScanned}
+  barcodeScannerSettings={{ barcodeTypes: ["qr"] }}
+/>
+
         <TouchableOpacity
           style={{ position: "absolute", bottom: 50, alignSelf: "center" }}
           onPress={() => setShowScanner(false)}
@@ -192,7 +219,6 @@ export default function LoginScreen() {
         >
           Point your camera at the QR code on your Nusuk card to log in
         </Text>
-
         <TouchableOpacity
           style={{
             backgroundColor: colors.buttonPrimary,
@@ -204,9 +230,16 @@ export default function LoginScreen() {
             justifyContent: "center",
             gap: spacing.md,
           }}
-          onPress={() => setShowScanner(true)}
+onPress={() => {
+  setScanned(false);
+  setShowScanner(true);
+}}
         >
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
+          <MaterialCommunityIcons
+            name="qrcode-scan"
+            size={24}
+            color="white"
+          />
           <Text
             style={{
               color: colors.textOnPrimary,

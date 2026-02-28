@@ -20,57 +20,62 @@ export default function LoginScreen() {
   }, []);
 
   const handleBarCodeScanned = async ({ data }: { data: string }) => {
-    // 1️⃣ الفحص الفوري: هل القفل مفعل؟
+    // 1️⃣ الفحص الفوري للقفل
     if (isProcessing.current) return;
-
-    // 2️⃣ تفعيل القفل فوراً
     isProcessing.current = true;
-    
-    // إخفاء الكاميرا لراحة المستخدم
     setShowScanner(false);
 
-    let pilgrimData;
+    let scannedData;
     try {
-      pilgrimData = JSON.parse(data);
+      scannedData = JSON.parse(data);
     } catch {
-      Alert.alert("Error", "QR code is not valid.");
-      isProcessing.current = false; // 🔓 فتح القفل عند الخطأ
-      return;
-    }
-
-    if (!pilgrimData.email) {
-      Alert.alert("Error", "QR code does not contain an email.");
+      Alert.alert("خطأ", "الباركود غير صالح.");
       isProcessing.current = false;
       return;
     }
 
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: pilgrimData.email,
-        options: { shouldCreateUser: true },
-      });
+      // 2️⃣ الخطوة الأهم: التأكد أن هذا الـ id موجود في جدولنا في Supabase
+      const { data: pilgrim, error: dbError } = await supabase
+        .from("pilgrims")
+        .select("email")
+        .eq("nusuk_id", scannedData.id) // نبحث برقم الهوية الموجود في الباركود
+        .maybeSingle();
 
-      if (error) {
-        Alert.alert("Error", error.message);
+      if (dbError || !pilgrim) {
+        Alert.alert("دخول مرفوض", "عذراً، بطاقة نسك هذه غير مسجلة في نظامنا.");
         isProcessing.current = false;
         return;
       }
 
-      // النجاح: الانتقال لصفحة التحقق
+      // 3️⃣ إذا وجده، نرسل الرمز للإيميل المرتبط به في قاعدة بياناتنا
+      // نستخدم pilgrim.email لضمان أننا نراسل الحساب الرسمي وليس أي إيميل عشوائي
+      const { error: authError } = await supabase.auth.signInWithOtp({
+        email: pilgrim.email,
+        options: { shouldCreateUser: true },
+      });
+
+      if (authError) {
+        Alert.alert("خطأ", authError.message);
+        isProcessing.current = false;
+        return;
+      }
+
+      // 4️⃣ الانتقال لصفحة التحقق بنجاح
       router.replace({
         pathname: "/otp-verification",
         params: {
-          email: pilgrimData.email,
-          data: JSON.stringify(pilgrimData),
+          email: pilgrim.email,
+          data: JSON.stringify(scannedData),
         },
       });
 
     } catch (err: any) {
-      Alert.alert("Error", "Something went wrong.");
+      Alert.alert("خطأ", "حدث خطأ أثناء الاتصال بقاعدة البيانات.");
       isProcessing.current = false;
     }
   };
-
+  
   // --- واجهة التحميل ---
   // ملاحظة: نستخدم showScanner للتحقق لأن useRef لا يحدث الواجهة
   if (!showScanner && isProcessing.current) {

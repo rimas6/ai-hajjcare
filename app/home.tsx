@@ -1,4 +1,4 @@
-import { colors, spacing, typography } from "@/constants/theme";
+import { colors, spacing, typography, radius, shadow } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -63,11 +63,8 @@ export default function HomeScreen() {
         onPress: async () => {
           // 1. تسجيل الخروج من Supabase
           await supabase.auth.signOut();
-          
           // 2. تنظيف أي بيانات مخزنة محلياً (إن وجدت)
-          await AsyncStorage.removeItem("user_id");
-          await AsyncStorage.removeItem("user_name");
-          
+          await AsyncStorage.clear();
           // 3. العودة لصفحة البداية
           router.replace("/");
         },
@@ -92,99 +89,110 @@ export default function HomeScreen() {
       </View>
     );
   }
+//--------------------------------
+ return (
+  <ScrollView 
+    style={{ flex: 1, backgroundColor: colors.background }} 
+    contentContainerStyle={{ padding: spacing.lg }}
+  >
+    
+    {/* 1️⃣ Header: دمجنا البراند مع أيقونات التحكم */}
+    <View style={{ 
+      flexDirection: "row", 
+      justifyContent: "space-between", 
+      alignItems: "center", 
+      marginTop: spacing.xxl, 
+      marginBottom: spacing.xl
+    }}>
+      <Text style={{ ...typography.title, color: colors.textPrimary, fontSize: 26, fontWeight: "900" }}>
+        AI HajjCare
+      </Text>
 
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{
-        paddingHorizontal: spacing.lg,
-        paddingVertical: spacing.lg,
-      }}
-    >
-      {/* Header */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: spacing.xl,
-          marginTop: spacing.md,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: typography.title.fontSize,
-            fontWeight: "700",
-            color: colors.textPrimary,
-          }}
-        >
-          Hajj Care
-        </Text>
-        <TouchableOpacity onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={28} color="#FF3B30" />
+      {/* تجمع أيقونة البروفايل والخروج معاً لتفادي التعارض البصري */}
+      <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+        {/* زر البروفايل حق صاحبتك - مربوط بصفحة البروفايل */}
+        <TouchableOpacity onPress={() => router.push("/profile")}>
+          <Ionicons name="person-circle-outline" size={32} color={colors.primary} />
+        </TouchableOpacity>
+
+        {/* زر تسجيل الخروج حقك */}
+        <TouchableOpacity onPress={handleLogout} style={{ padding: spacing.xs }}>
+          <Ionicons name="log-out-outline" size={28} color={colors.buttonDanger} />
         </TouchableOpacity>
       </View>
+    </View>
 
-      {/* Welcome Card */}
-      <View
-        style={{
-          backgroundColor: colors.buttonSecondary,
-          borderRadius: 12,
-          padding: spacing.lg,
-          marginBottom: spacing.xl,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: typography.subtitle.fontSize,
-            fontWeight: "600",
-            color: colors.textPrimary,
-            marginBottom: spacing.sm,
-          }}
-        >
-          Welcome Back, {pilgrimData?.name || "Pilgrim"}!
-        </Text>
-        <Text
-          style={{
-            fontSize: typography.body.fontSize,
-            color: colors.textSecondary,
-          }}
-        >
-          Your pilgrimage journey starts here
-        </Text>
+    {/* 2️⃣ Welcome Digital ID Card - ستايلك الرهيب */}
+    <View style={{ 
+      backgroundColor: colors.card, 
+      borderRadius: radius.lg, 
+      padding: spacing.lg, 
+      marginBottom: spacing.xxl,
+      borderWidth: 1,
+      borderColor: colors.divider,
+      borderLeftWidth: 6, 
+      borderLeftColor: colors.primary,
+      ...shadow.card 
+    }}>
+      <Text style={{ color: colors.textSecondary, fontSize: 12, fontWeight: '600', letterSpacing: 0.5 }}>
+          WELCOME TO YOUR JOURNEY
+      </Text>
+      
+      <Text style={{ color: colors.textPrimary, fontSize: 24, fontWeight: '800', marginTop: 4 }}>
+        {pilgrimData?.name || "----"}
+      </Text>
+
+      <View style={{ height: 1.4, backgroundColor: colors.divider, marginVertical: spacing.md }} />
+      
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <View>
+          <Text style={{ fontSize: 10, color: colors.textMuted, fontWeight: '700' }}>NUSUK ID</Text>
+          <Text style={{ color: colors.primary, fontSize: 18, fontWeight: '800', marginTop: 2 }}>
+            #{pilgrimData?.id || "2026101"}
+          </Text>
+        </View>
+        <Ionicons name="qr-code-outline" size={30} color={colors.primary} />
       </View>
+    </View>
 
-      {/* Symptom Check Button */}
-      <TouchableOpacity
-        style={{
-          backgroundColor: colors.buttonPrimary,
-          borderRadius: 12,
-          paddingVertical: spacing.lg,
-          paddingHorizontal: spacing.xl,
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: spacing.md,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-        // هنا يمكنك إضافة التنقل لصفحة الأعراض مستقبلاً
-        // onPress={() => router.push("/symptoms")} 
-      >
-        <Ionicons name="pulse" size={28} color={colors.textOnPrimary} />
-        <Text
-          style={{
-            fontSize: typography.body.fontSize,
-            fontWeight: "600",
-            color: colors.textOnPrimary,
-          }}
-        >
+    {/* 3️⃣ Medical Services Section */}
+    <Text style={{ ...typography.subtitle, color: colors.textPrimary, marginBottom: spacing.md, fontWeight: '700' }}>
+      Medical Services
+    </Text>
+    
+    <TouchableOpacity 
+      style={{ 
+        backgroundColor: colors.card, 
+        borderRadius: radius.md, 
+        padding: spacing.lg, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        borderWidth: 1,
+        borderColor: colors.divider,
+        ...shadow.card 
+      }}
+      onPress={() => router.push("/symptom-screen")}
+    >
+      <View style={{ 
+        backgroundColor: colors.primaryLight, 
+        padding: 10, 
+        borderRadius: radius.sm,
+        marginRight: spacing.md
+      }}>
+        <Ionicons name="pulse" size={26} color={colors.primary} />
+      </View>
+      
+      <View style={{ flex: 1 }}>
+        <Text style={{ ...typography.body, fontWeight: '700', color: colors.textPrimary, fontSize: 18 }}>
           Check Symptoms
         </Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-}
+        <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+          AI Health Analysis
+        </Text>
+      </View>
+      
+      <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
+    </TouchableOpacity>
+
+  </ScrollView>
+);}

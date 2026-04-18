@@ -1,30 +1,84 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
-import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-// استيراد الثيم الخاص بكِ
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
+
+// ── رابط الـ Backend — غيّريه لرابط ngrok الخاص بك ──────────────
+const API_URL = "https://gaited-stormless-galileo.ngrok-free.dev";
+// ─────────────────────────────────────────────────────────────────
+
+// الأعراض الشائعة مع الاسم العربي للعرض + الاسم التقني للموديل
+const COMMON_SYMPTOMS = [
+  { label: "صداع",           value: "headache" },
+  { label: "حمى",            value: "high_fever" },
+  { label: "كحة",            value: "cough" },
+  { label: "دوخة",           value: "dizziness" },
+  { label: "تعب وإرهاق",    value: "fatigue" },
+  { label: "غثيان",          value: "nausea" },
+  { label: "قيء",            value: "vomiting" },
+  { label: "ألم في الصدر",   value: "chest_pain" },
+  { label: "ضيق تنفس",       value: "breathlessness" },
+  { label: "ألم في المفاصل", value: "joint_pain" },
+  { label: "إسهال",          value: "diarrhoea" },
+  { label: "ألم في البطن",   value: "abdominal_pain" },
+  { label: "طفح جلدي",       value: "skin_rash" },
+  { label: "تعرق",           value: "sweating" },
+  { label: "قشعريرة",        value: "chills" },
+  { label: "فقدان الشهية",   value: "loss_of_appetite" },
+];
 
 export default function SymptomIntakeScreen() {
   const router = useRouter();
-
-  // نعدلها بعدين لاعراض المودل حقتنا عشان يفهمها
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
-  const commonSymptoms = [
-    "Headache",
-    "Fever",
-    "Cough",
-    "Dizziness",
-    "Fatigue",
-    "Nausea",
-  ];
+  const [loading, setLoading] = useState(false);
 
-  const toggleSymptom = (symptom: string) => {
-    if (selectedSymptoms.includes(symptom)) {
-      setSelectedSymptoms(selectedSymptoms.filter((s) => s !== symptom));
-    } else {
-      setSelectedSymptoms([...selectedSymptoms, symptom]);
+  const toggleSymptom = (value: string) => {
+    setSelectedSymptoms((prev) =>
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
+    );
+  };
+
+  // ── إرسال الأعراض للـ Backend ─────────────────────────────────
+  const handleAnalyze = async () => {
+    if (selectedSymptoms.length < 3) {
+      Alert.alert("تنبيه", "يرجى اختيار 3 أعراض على الأقل للحصول على تقييم دقيق.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symptoms: selectedSymptoms }),
+      });
+
+      const data = await response.json();
+
+      // ── انتقلي لشاشة النتيجة مع البيانات ───────────────────
+      router.push({
+        pathname: "/result-screen",
+        params: {
+          severity:   data.severity,
+          confidence: String(data.confidence),
+          decided_by: data.decided_by,
+          reason:     data.reason,
+          symptoms:   selectedSymptoms.join(","),
+        },
+      });
+    } catch (error) {
+      Alert.alert("خطأ", "تعذّر الاتصال بالسيرفر. تأكد من تشغيل الـ Backend.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -33,7 +87,7 @@ export default function SymptomIntakeScreen() {
       style={{ flex: 1, backgroundColor: colors.background }}
       contentContainerStyle={{ padding: spacing.lg }}
     >
-      {/* 1️⃣ Header - زر الرجوع المعتمد */}
+      {/* Header */}
       <View
         style={{
           flexDirection: "row",
@@ -65,7 +119,7 @@ export default function SymptomIntakeScreen() {
         </Text>
       </View>
 
-      {/* خيار 1: القائمة السريعة (Checklist) */}
+      {/* Quick Checklist */}
       <View style={{ marginBottom: spacing.xl }}>
         <Text
           style={{
@@ -85,46 +139,44 @@ export default function SymptomIntakeScreen() {
             marginBottom: spacing.md,
           }}
         >
-          Select the symptoms you are currently experiencing:
+          اختر الأعراض التي تعاني منها حالياً ({selectedSymptoms.length} مختار)
         </Text>
 
-        <View
-          style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}
-        >
-          {commonSymptoms.map((symptom) => (
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.sm }}>
+          {COMMON_SYMPTOMS.map((symptom) => (
             <TouchableOpacity
-              key={symptom}
-              onPress={() => toggleSymptom(symptom)}
+              key={symptom.value}
+              onPress={() => toggleSymptom(symptom.value)}
               style={{
                 paddingHorizontal: spacing.md,
                 paddingVertical: spacing.sm,
                 borderRadius: radius.full,
                 borderWidth: 1,
-                borderColor: selectedSymptoms.includes(symptom)
+                borderColor: selectedSymptoms.includes(symptom.value)
                   ? colors.primary
                   : colors.divider,
-                backgroundColor: selectedSymptoms.includes(symptom)
+                backgroundColor: selectedSymptoms.includes(symptom.value)
                   ? colors.primaryLight
                   : colors.card,
               }}
             >
               <Text
                 style={{
-                  color: selectedSymptoms.includes(symptom)
+                  color: selectedSymptoms.includes(symptom.value)
                     ? colors.primary
                     : colors.textPrimary,
                   fontWeight: "600",
                   fontSize: 14,
                 }}
               >
-                {symptom}
+                {symptom.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      {/* فاصل رسمي */}
+      {/* فاصل OR */}
       <View
         style={{
           flexDirection: "row",
@@ -146,7 +198,7 @@ export default function SymptomIntakeScreen() {
         <View style={{ flex: 1, height: 1, backgroundColor: colors.divider }} />
       </View>
 
-      {/* خيار 2: المحادثة الذكية (Gemini AI Chat) */}
+      {/* AI Chat */}
       <View style={{ marginBottom: spacing.xxl }}>
         <Text
           style={{
@@ -170,10 +222,7 @@ export default function SymptomIntakeScreen() {
             alignItems: "center",
             ...shadow.card,
           }}
-          //وقت الباك اند
-          onPress={() =>
-            Alert.alert("HajjSence AI", "Opening Gemini Chatbot...")
-          }
+          onPress={() => router.push("/chat-screen")}
         >
           <View
             style={{
@@ -197,23 +246,17 @@ export default function SymptomIntakeScreen() {
                 color: colors.textPrimary,
               }}
             >
-              Chat with Gemini
+              Chat with AI
             </Text>
-            <Text
-              style={{ ...typography.caption, color: colors.textSecondary }}
-            >
-              Explain your case in detail
+            <Text style={{ ...typography.caption, color: colors.textSecondary }}>
+              اوصف حالتك بالعربي أو الإنجليزي
             </Text>
           </View>
-          <Ionicons
-            name="chatbubble-ellipses-outline"
-            size={24}
-            color={colors.primary}
-          />
+          <Ionicons name="chatbubble-ellipses-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
-      {/* زر الانتقال لصفحة النتائج */}
+      {/* زر View Results */}
       <TouchableOpacity
         style={{
           backgroundColor: colors.buttonPrimary,
@@ -221,22 +264,25 @@ export default function SymptomIntakeScreen() {
           padding: spacing.lg,
           alignItems: "center",
           ...shadow.floating,
-          opacity: selectedSymptoms.length > 0 ? 1 : 0.6, // تفعيل الزر عند الاختيار
+          opacity: selectedSymptoms.length >= 3 ? 1 : 0.6,
         }}
-        disabled={selectedSymptoms.length === 0}
-        //وقت الباك اند
-        onPress={() => Alert.alert("System", "Navigating to Results Page...")}
+        disabled={selectedSymptoms.length < 3 || loading}
+        onPress={handleAnalyze}
       >
-        <Text
-          style={{
-            ...typography.body,
-            fontWeight: "700",
-            color: colors.textOnPrimary,
-            fontSize: 18,
-          }}
-        >
-          View Results
-        </Text>
+        {loading ? (
+          <ActivityIndicator color={colors.textOnPrimary} />
+        ) : (
+          <Text
+            style={{
+              ...typography.body,
+              fontWeight: "700",
+              color: colors.textOnPrimary,
+              fontSize: 18,
+            }}
+          >
+            View Results
+          </Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );

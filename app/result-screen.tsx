@@ -1,7 +1,7 @@
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, Linking, Alert } from "react-native";
 
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
 
@@ -73,7 +73,22 @@ export default function ResultScreen() {
     gemini_override:  "🧠 Gemini AI",
     confidence_boost: "📊 تعزيز الثقة",
   };
+// رقم الطوارئ والدالة المخصصة للآيفون
+  const phoneNumber = '911';
 
+  const callEmergency = () => {
+    const phoneUrl = `telprompt:${phoneNumber}`;
+
+    Linking.canOpenURL(phoneUrl)
+      .then((supported) => {
+        if (!supported) {
+          Alert.alert('عذراً', 'لا يمكن فتح شاشة الاتصال في المحاكي. الرجاء التجربة على جهاز آيفون حقيقي.');
+        } else {
+          return Linking.openURL(phoneUrl);
+        }
+      })
+      .catch((err) => console.error('Error calling:', err));
+  };
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -125,24 +140,7 @@ export default function ResultScreen() {
           {config.subtitle}
         </Text>
 
-        {/* شريط الثقة */}
-        {severity !== "Insufficient" && (
-          <View style={{ width: "100%", marginTop: spacing.lg }}>
-            <Text style={{ color: colors.textSecondary, fontSize: 12, textAlign: "center", marginBottom: spacing.xs }}>
-              دقة التحليل: {Math.round(confidence * 100)}%
-            </Text>
-            <View style={{ backgroundColor: colors.divider, borderRadius: 4, height: 8 }}>
-              <View
-                style={{
-                  backgroundColor: config.color,
-                  borderRadius: 4,
-                  height: 8,
-                  width: `${Math.round(confidence * 100)}%`,
-                }}
-              />
-            </View>
-          </View>
-        )}
+        
       </View>
 
       {/* التوصية */}
@@ -161,11 +159,7 @@ export default function ResultScreen() {
         <Text style={{ ...typography.body, color: colors.textSecondary, lineHeight: 24 }}>
           {config.description}
         </Text>
-        {reason ? (
-          <Text style={{ ...typography.caption, color: colors.textMuted, marginTop: spacing.sm, fontStyle: "italic" }}>
-            {reason}
-          </Text>
-        ) : null}
+       
       </View>
 
       {/* الأعراض المكتشفة */}
@@ -202,46 +196,37 @@ export default function ResultScreen() {
         </View>
       )}
 
-      {/* مصدر القرار */}
-      {severity !== "Insufficient" && (
-        <View
-          style={{
-            backgroundColor: colors.card,
-            borderRadius: radius.lg,
-            padding: spacing.lg,
-            marginBottom: spacing.xl,
-            flexDirection: "row",
-            alignItems: "center",
-            ...shadow.card,
-          }}
-        >
-          <MaterialCommunityIcons name="information-outline" size={20} color={colors.textMuted} />
-          <Text style={{ ...typography.caption, color: colors.textMuted, marginLeft: spacing.sm }}>
-            القرار بواسطة: {decidedByLabel[decided_by] || decided_by}
-          </Text>
-        </View>
-      )}
+      
 
-      {/* زر الإجراء */}
+      {/* زر الإجراء (مدمج مع الاتصال للحالات الخطرة) */}
       <TouchableOpacity
         style={{
           backgroundColor: config.actionColor,
           borderRadius: radius.md,
           padding: spacing.lg,
           alignItems: "center",
+          justifyContent: "center",
           marginBottom: spacing.md,
+          flexDirection: severity === "High" ? "row" : "column", // نخليها صف عشان الأيقونة في الحالة الخطرة
           ...shadow.floating,
         }}
         onPress={() => {
-          if (severity === "Insufficient") {
+          if (severity === "High") {
+            callEmergency(); // يتصل بـ 911 فوراً
+          } else if (severity === "Insufficient") {
             router.back();
           } else {
             router.push("/home");
           }
         }}
       >
+        {/* إظهار أيقونة سماعة فقط في حالة الخطورة */}
+        {severity === "High" && (
+          <Ionicons name="call" size={24} color="#fff" style={{ marginRight: 10 }} />
+        )}
+        
         <Text style={{ ...typography.body, fontWeight: "700", color: "#fff", fontSize: 18 }}>
-          {config.action}
+          {severity === "High" ? `اتصل بالطوارئ ${phoneNumber}` : config.action}
         </Text>
       </TouchableOpacity>
 

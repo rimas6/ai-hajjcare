@@ -28,7 +28,7 @@ type Message = {
 const WELCOME_MESSAGE: Message = {
   id: "0",
   role: "bot",
-  text: "مرحباً! أنا مساعدك الطبي الذكي 🤖\n\nاوصف لي أعراضك بالعربي أو الإنجليزي وسأحدد درجة خطورة حالتك.\n\nمثال: \"عندي حمى شديدة وألم في صدري وتعب\"",
+  text: "Hello! I am your AI Medical Assistant 🤖\n\nPlease describe your symptoms in English , and I will assess the severity of your condition.\n\nExample: \"I have a high fever, chest pain, and fatigue.\"",
 };
 
 export default function ChatScreen() {
@@ -66,7 +66,7 @@ export default function ChatScreen() {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "bot",
-          text: data.message || "لم أتعرف على أعراض واضحة. هل يمكنك وصف حالتك بشكل أوضح؟\n\nمثال: \"عندي صداع وحمى وتعب\"",
+          text: data.message || "I couldn't recognize any clear symptoms. Could you describe your condition more clearly?\n\nExample: \"I am experiencing a headache, fever, and fatigue.\"",
         };
         setMessages((prev) => [...prev, botMessage]);
         return;
@@ -77,7 +77,7 @@ export default function ChatScreen() {
         const botMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: "bot",
-          text: "أحتاج معلومات أكثر عن حالتك 🤔\n\nهل عندك أعراض أخرى مثل:\n• سخونة أو حمى؟\n• ألم في أي مكان؟\n• دوخة أو غثيان؟",
+          text: "I need a little more information about your condition 🤔\n\nAre you experiencing any other symptoms, such as:\n• Fever or high temperature?\n• Pain anywhere in your body?\n• Dizziness or nausea?",
         };
         setMessages((prev) => [...prev, botMessage]);
         return;
@@ -87,8 +87,8 @@ export default function ChatScreen() {
       const botMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "bot",
-        text: `تم تحليل أعراضك ✅\nجارٍ عرض النتيجة...`,
-      };
+        text: `Symptoms analyzed successfully ✅\nDisplaying results...`,
+};
       setMessages((prev) => [...prev, botMessage]);
 
       setTimeout(() => {
@@ -180,9 +180,6 @@ export default function ChatScreen() {
           <Text style={{ ...typography.title, fontSize: 18, fontWeight: "800", color: colors.textPrimary }}>
             AI Medical Consultant
           </Text>
-          <Text style={{ ...typography.caption, color: colors.textSecondary }}>
-            مدعوم بـ Gemini + Random Forest
-          </Text>
         </View>
         <View
           style={{
@@ -209,7 +206,7 @@ export default function ChatScreen() {
         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: spacing.lg, paddingBottom: spacing.sm }}>
           <ActivityIndicator size="small" color={colors.primary} />
           <Text style={{ marginLeft: spacing.sm, color: colors.textSecondary, fontSize: 13 }}>
-            جارٍ التحليل...
+           Analyzing...
           </Text>
         </View>
       )}

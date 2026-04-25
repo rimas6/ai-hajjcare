@@ -1,52 +1,58 @@
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React from "react";
-import { ScrollView, Text, TouchableOpacity, View, Linking, Alert } from "react-native";
+import { Alert, Linking, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
 
-// إعدادات كل مستوى خطورة
 const SEVERITY_CONFIG = {
   High: {
     color:       "#ef4444",
     bgColor:     "#fef2f2",
     icon:        "alert-circle" as const,
-    title:       "⚠️ حالة خطيرة",
-    subtitle:    "توجه للطوارئ فوراً",
-    description: "أعراضك تشير إلى حالة طبية طارئة تستوجب رعاية طبية فورية. لا تتأخر في التوجه لأقرب مستشفى أو مركز طبي.",
-    action:      "🏥 توجه للطوارئ الآن",
+    title:       "⚠️ Critical Condition",
+    subtitle:    "Go to the Emergency Room immediately",
+    description: "Your symptoms indicate a medical emergency that requires immediate attention. Do not delay — go to the nearest hospital or medical center now.",
+    action:      "🏥 Get Help Now",
     actionColor: "#ef4444",
   },
   Medium: {
     color:       "#f97316",
     bgColor:     "#fff7ed",
     icon:        "warning" as const,
-    title:       "⚡ تحتاج عناية طبية",
-    subtitle:    "راجع طبيباً قريباً",
-    description: "حالتك تستدعي مراجعة طبيب في أقرب وقت. لا تتجاهل الأعراض وتوجه لأقرب عيادة أو مستوصف.",
-    action:      "🩺 احجز موعد طبي",
+    title:       "⚡ Medical Attention Needed",
+    subtitle:    "See a doctor soon",
+    description: "Your condition requires medical attention as soon as possible. Do not ignore your symptoms — visit the nearest clinic or medical center.",
+    action:      "Find Nearby Hospitals",
     actionColor: "#f97316",
   },
   Low: {
     color:       "#22c55e",
     bgColor:     "#f0fdf4",
     icon:        "checkmark-circle" as const,
-    title:       "✅ حالة بسيطة",
-    subtitle:    "الراحة تكفي",
-    description: "أعراضك بسيطة ولا تستدعي قلقاً. احرص على الراحة والترطيب الجيد، وإذا ساءت الأعراض راجع طبيباً.",
-    action:      "💊 توجه للصيدلية",
-    actionColor: "#22c55e",
+    title:       "✅ Mild Condition",
+    subtitle:    "Rest is sufficient",
+    description: "Your symptoms are mild and not a cause for concern. Make sure to rest and stay hydrated. If symptoms worsen, consult a doctor.",
+    action:      undefined,
+    actionColor: undefined,
   },
   Insufficient: {
     color:       "#6b7280",
     bgColor:     "#f9fafb",
     icon:        "help-circle" as const,
-    title:       "❓ بيانات غير كافية",
-    subtitle:    "أدخل المزيد من الأعراض",
-    description: "لم تكن الأعراض المدخلة كافية لتحديد درجة الخطورة بدقة. يرجى إدخال 3 أعراض على الأقل.",
-    action:      "🔄 حاول مرة أخرى",
+    title:       "❓ Insufficient Data",
+    subtitle:    "Please enter more symptoms",
+    description: "The symptoms provided were not enough to determine the severity accurately. Please enter at least 3 symptoms.",
+    action:      "🔄 Try Again",
     actionColor: "#6b7280",
   },
+};
+
+const decidedByLabel: Record<string, string> = {
+  model:            "🤖 Model",
+  safety_override:  "🛡️ Safety Rule",
+  gemini_override:  "🧠 Gemini AI",
+  confidence_boost: "📊 Confidence Boost",
 };
 
 export default function ResultScreen() {
@@ -67,28 +73,21 @@ export default function ResultScreen() {
 
   const config = SEVERITY_CONFIG[severity as keyof typeof SEVERITY_CONFIG] || SEVERITY_CONFIG.Insufficient;
 
-  const decidedByLabel: Record<string, string> = {
-    model:            "🤖 الموديل",
-    safety_override:  "🛡️ قاعدة السلامة",
-    gemini_override:  "🧠 Gemini AI",
-    confidence_boost: "📊 تعزيز الثقة",
-  };
-// رقم الطوارئ والدالة المخصصة للآيفون
-  const phoneNumber = '911';
+  const phoneNumber = "911";
 
   const callEmergency = () => {
     const phoneUrl = `telprompt:${phoneNumber}`;
-
     Linking.canOpenURL(phoneUrl)
       .then((supported) => {
         if (!supported) {
-          Alert.alert('عذراً', 'لا يمكن فتح شاشة الاتصال في المحاكي. الرجاء التجربة على جهاز آيفون حقيقي.');
+          Alert.alert("Sorry", "Cannot open the dialer on a simulator. Please test on a real device.");
         } else {
           return Linking.openURL(phoneUrl);
         }
       })
-      .catch((err) => console.error('Error calling:', err));
+      .catch((err) => console.error("Error calling:", err));
   };
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background }}
@@ -115,11 +114,11 @@ export default function ResultScreen() {
           <Ionicons name="chevron-back" size={24} color={colors.primary} />
         </TouchableOpacity>
         <Text style={{ ...typography.title, color: colors.textPrimary, fontSize: 22, fontWeight: "800" }}>
-          نتيجة التحليل
+          Analysis Results
         </Text>
       </View>
 
-      {/* بطاقة النتيجة الرئيسية */}
+      {/* Main Result Card */}
       <View
         style={{
           backgroundColor: config.bgColor,
@@ -133,17 +132,15 @@ export default function ResultScreen() {
         }}
       >
         <Ionicons name={config.icon} size={64} color={config.color} />
-        <Text style={{ fontSize: 28, fontWeight: "900", color: config.color, marginTop: spacing.md }}>
+        <Text style={{ fontSize: 26, fontWeight: "900", color: config.color, marginTop: spacing.md, textAlign: "center" }}>
           {config.title}
         </Text>
         <Text style={{ fontSize: 16, color: config.color, fontWeight: "600", marginTop: spacing.xs }}>
           {config.subtitle}
         </Text>
-
-        
       </View>
 
-      {/* التوصية */}
+      {/* Recommendation */}
       <View
         style={{
           backgroundColor: colors.card,
@@ -154,15 +151,14 @@ export default function ResultScreen() {
         }}
       >
         <Text style={{ ...typography.subtitle, fontWeight: "700", color: colors.textPrimary, marginBottom: spacing.sm }}>
-          التوصية
+          Recommendation
         </Text>
         <Text style={{ ...typography.body, color: colors.textSecondary, lineHeight: 24 }}>
           {config.description}
         </Text>
-       
       </View>
 
-      {/* الأعراض المكتشفة */}
+      {/* Detected Symptoms */}
       {symptoms.length > 0 && (
         <View
           style={{
@@ -174,7 +170,7 @@ export default function ResultScreen() {
           }}
         >
           <Text style={{ ...typography.subtitle, fontWeight: "700", color: colors.textPrimary, marginBottom: spacing.sm }}>
-            الأعراض المحللة ({symptoms.length})
+            Detected Symptoms ({symptoms.length})
           </Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
             {symptoms.map((s, i) => (
@@ -196,41 +192,70 @@ export default function ResultScreen() {
         </View>
       )}
 
-      
-
-      {/* زر الإجراء (مدمج مع الاتصال للحالات الخطرة) */}
-      <TouchableOpacity
+      {/* 
+      Debug Info — remove before final submission 
+      <View
         style={{
-          backgroundColor: config.actionColor,
+          backgroundColor: "#f3f4f6",
           borderRadius: radius.md,
-          padding: spacing.lg,
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: spacing.md,
-          flexDirection: severity === "High" ? "row" : "column", // نخليها صف عشان الأيقونة في الحالة الخطرة
-          ...shadow.floating,
-        }}
-        onPress={() => {
-          if (severity === "High") {
-            callEmergency(); // يتصل بـ 911 فوراً
-          } else if (severity === "Insufficient") {
-            router.back();
-          } else {
-            router.push("/home");
-          }
+          padding: spacing.md,
+          marginBottom: spacing.lg,
+          borderWidth: 1,
+          borderColor: "#9ca3af",
+          borderStyle: "dashed",
         }}
       >
-        {/* إظهار أيقونة سماعة فقط في حالة الخطورة */}
-        {severity === "High" && (
-          <Ionicons name="call" size={24} color="#fff" style={{ marginRight: 10 }} />
-        )}
-        
-        <Text style={{ ...typography.body, fontWeight: "700", color: "#fff", fontSize: 18 }}>
-          {severity === "High" ? `اتصل بالطوارئ ${phoneNumber}` : config.action}
+        <Text style={{ ...typography.subtitle, fontWeight: "800", color: "#374151", marginBottom: spacing.sm, textAlign: "center" }}>
+          ⚙️ Developer Info (Debug)
         </Text>
-      </TouchableOpacity>
+        <View style={{ flexDirection: "column", gap: 4 }}>
+          <Text style={{ ...typography.body, color: "#4b5563", fontWeight: "600" }}>
+            🔹 Decision by: {decidedByLabel[decided_by] || decided_by}
+          </Text>
+          <Text style={{ ...typography.body, color: "#4b5563", fontWeight: "600" }}>
+            🔹 Confidence: {Math.round(confidence * 100)}%
+          </Text>
+          {reason ? (
+            <Text style={{ ...typography.body, color: "#4b5563", fontWeight: "600" }}>
+              🔹 Reason: {reason}
+            </Text>
+          ) : null}
+        </View>
+      </View>*/}
 
-      {/* زر إعادة التحليل */}
+      {/* Action Button */}
+      {config.action && (
+        <TouchableOpacity
+          style={{
+            backgroundColor: config.actionColor,
+            borderRadius: radius.md,
+            padding: spacing.lg,
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: spacing.md,
+            flexDirection: "row",
+            ...shadow.floating,
+          }}
+          onPress={() => {
+            if (severity === "High") {
+              callEmergency();
+            } else if (severity === "Insufficient") {
+              router.back();
+            } else {
+              router.push("/home");
+            }
+          }}
+        >
+          {severity === "High" && (
+            <Ionicons name="call" size={24} color="#fff" style={{ marginRight: 10 }} />
+          )}
+          <Text style={{ ...typography.body, fontWeight: "700", color: "#fff", fontSize: 18 }}>
+            {severity === "High" ? `Call Emergency ${phoneNumber}` : config.action}
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* New Analysis Button */}
       <TouchableOpacity
         style={{
           borderRadius: radius.md,
@@ -242,11 +267,11 @@ export default function ResultScreen() {
         onPress={() => router.push("/symptom-screen")}
       >
         <Text style={{ color: colors.textSecondary, fontWeight: "600" }}>
-          🔄 تحليل جديد
+          🔄 New Analysis
         </Text>
       </TouchableOpacity>
 
-      {/* تنبيه طبي */}
+      {/* Medical Disclaimer */}
       <Text
         style={{
           ...typography.caption,
@@ -256,7 +281,7 @@ export default function ResultScreen() {
           lineHeight: 18,
         }}
       >
-        ⚠️ هذا التطبيق للمساعدة فقط ولا يُغني عن استشارة الطبيب المختص
+        ⚠️ This app is for assistance only and does not replace professional medical advice.
       </Text>
     </ScrollView>
   );

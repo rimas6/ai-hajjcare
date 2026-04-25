@@ -236,7 +236,7 @@ export default function ChatScreen() {
             borderColor: colors.divider,
             textAlign: "right",
           }}
-          placeholder="اوصف أعراضك هنا..."
+          placeholder="Describe your symptoms in English..."
           placeholderTextColor={colors.textMuted}
           value={input}
           onChangeText={setInput}

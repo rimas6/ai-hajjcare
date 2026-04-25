@@ -18,22 +18,22 @@ const API_URL = "https://gaited-stormless-galileo.ngrok-free.dev";
 
 // الأعراض الشائعة مع الاسم العربي للعرض + الاسم التقني للموديل
 const COMMON_SYMPTOMS = [
-  { label: "صداع",           value: "headache" },
-  { label: "حمى",            value: "high_fever" },
-  { label: "كحة",            value: "cough" },
-  { label: "دوخة",           value: "dizziness" },
-  { label: "تعب وإرهاق",    value: "fatigue" },
-  { label: "غثيان",          value: "nausea" },
-  { label: "قيء",            value: "vomiting" },
-  { label: "ألم في الصدر",   value: "chest_pain" },
-  { label: "ضيق تنفس",       value: "breathlessness" },
-  { label: "ألم في المفاصل", value: "joint_pain" },
-  { label: "إسهال",          value: "diarrhoea" },
-  { label: "ألم في البطن",   value: "abdominal_pain" },
-  { label: "طفح جلدي",       value: "skin_rash" },
-  { label: "تعرق",           value: "sweating" },
-  { label: "قشعريرة",        value: "chills" },
-  { label: "فقدان الشهية",   value: "loss_of_appetite" },
+  { label: "headache",           value: "headache" },
+  { label: "high fever",            value: "high_fever" },
+  { label: "cough",            value: "cough" },
+  { label: "dizziness",           value: "dizziness" },
+  { label: "fatigue",    value: "fatigue" },
+  { label: "nausea",          value: "nausea" },
+  { label: "vomiting",            value: "vomiting" },
+  { label: "chest pain",   value: "chest_pain" },
+  { label: "breath lessness",       value: "breathlessness" },
+  { label: "joint pain",      value: "joint_pain" },
+  { label: "diarrhoea",       value: "diarrhoea" },
+  { label: "abdominal pain",  value: "abdominal_pain" },
+  { label: "skin rash",       value: "skin_rash" },
+  { label: "sweating",        value: "sweating" },
+  { label: "chills",          value: "chills" },
+  { label: " loss of appetite",  value: "loss_of_appetite" },
 ];
 
 export default function SymptomIntakeScreen() {

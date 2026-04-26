@@ -29,7 +29,7 @@ export default function LoginScreen() {
     try {
       scannedData = JSON.parse(data);
     } catch {
-      Alert.alert("خطأ", "الباركود غير صالح.");
+      Alert.alert("error", "Invalid QR code format.");
       isProcessing.current = false;
       return;
     }
@@ -43,7 +43,7 @@ export default function LoginScreen() {
         .maybeSingle();
 
       if (dbError || !pilgrim) {
-        Alert.alert("دخول مرفوض", "عذراً، بطاقة نسك هذه غير مسجلة في نظامنا.");
+        Alert.alert("Access Denied", "Sorry, this Nusuk card is not registered in our system.");
         isProcessing.current = false;
         return;
       }
@@ -56,7 +56,7 @@ export default function LoginScreen() {
       });
 
       if (authError) {
-        Alert.alert("خطأ", authError.message);
+        Alert.alert("Error", authError.message);
         isProcessing.current = false;
         return;
       }
@@ -71,7 +71,7 @@ export default function LoginScreen() {
       });
 
     } catch (err: any) {
-      Alert.alert("خطأ", "حدث خطأ أثناء الاتصال بقاعدة البيانات.");
+      Alert.alert("Error", "An error occurred while connecting to the database.");
       isProcessing.current = false;
     }
   };
@@ -122,19 +122,75 @@ export default function LoginScreen() {
 
   // --- الواجهة الرئيسية ---
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 20 }}>Welcome</Text>
+    <View style={{ 
+      flex: 1, 
+      backgroundColor: colors.background, 
+      paddingHorizontal: spacing.xl, 
+      justifyContent: 'center', 
+      alignItems: 'center' 
+    }}>
       
+      {/* 1. أيقونة الـ QR Code الخضراء الكبيرة في المنتصف */}
+      <View style={{ marginBottom: spacing.xl }}>
+        <MaterialCommunityIcons 
+          name="qrcode" 
+          size={140} 
+          color={colors.primary} // الأخضر الأساسي من الثيم حقك
+        />
+      </View>
+
+      {/* 2. العنوان الرئيسي */}
+      <Text style={{ 
+        fontSize: 26, 
+        fontWeight: 'bold', 
+        color: colors.textPrimary, 
+        marginBottom: spacing.sm,
+        textAlign: 'center'
+      }}>
+        Scan Your Nusuk Card
+      </Text>
+
+      {/* 3. النص الوصفي الصغير */}
+      <Text style={{ 
+        fontSize: 16, 
+        color: colors.textSecondary, 
+        textAlign: 'center', 
+        marginBottom: spacing.xxl, // مسافة كبيرة قبل الزر
+        lineHeight: 22,
+        paddingHorizontal: 10
+      }}>
+        Point your camera at the QR code on your Nusuk card to log in
+      </Text>
+
+      {/* 4. زر البدء (Start Scanning) */}
       <TouchableOpacity
-        style={{ backgroundColor: colors.buttonPrimary, paddingHorizontal: 30, paddingVertical: 15, borderRadius: 10, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+        style={{ 
+          backgroundColor: colors.buttonPrimary, 
+          width: '85%', // عرض الزر مثل اللي بالصورة
+          height: 55, 
+          borderRadius: radius.md, 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          gap: 12,
+          // إضافة ظل خفيف للزر ليعطيه طابع احترافي
+          elevation: 2,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+        }}
         onPress={() => {
-          isProcessing.current = false; // تصفير القفل
+          isProcessing.current = false;
           setShowScanner(true);
         }}
       >
-        <MaterialCommunityIcons name="qrcode-scan" size={24} color="white" />
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>Scan Nusuk Card</Text>
+        <MaterialCommunityIcons name="qrcode-scan" size={22} color="white" />
+        <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>
+          Start Scanning
+        </Text>
       </TouchableOpacity>
+
     </View>
   );
 }

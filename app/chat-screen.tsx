@@ -12,6 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
 
@@ -32,6 +34,7 @@ const WELCOME_MESSAGE: Message = {
 };
 
 export default function ChatScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
   const [input, setInput] = useState("");
@@ -145,19 +148,19 @@ export default function ChatScreen() {
       </View>
     );
   };
-
+const headerHeight = useHeaderHeight();
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={90}
-    >
+<KeyboardAvoidingView 
+  behavior={Platform.OS === "ios" ? "padding" : "height"} 
+  keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0} 
+  style={{ flex: 1 }}
+>
       {/* Header */}
       <View
         style={{
           flexDirection: "row",
           alignItems: "center",
-          paddingTop: spacing.xxl,
+          paddingTop: insets.top + spacing.md,
           paddingHorizontal: spacing.lg,
           paddingBottom: spacing.md,
           backgroundColor: colors.background,

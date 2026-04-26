@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
 
@@ -34,6 +35,7 @@ const COMMON_SYMPTOMS = [
 ];
 
 export default function SymptomIntakeScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -89,6 +91,7 @@ export default function SymptomIntakeScreen() {
           marginTop: spacing.xl,
           paddingHorizontal: spacing.lg,
           paddingBottom: spacing.md,
+          paddingTop: insets.top,
         }}
       >
         <TouchableOpacity

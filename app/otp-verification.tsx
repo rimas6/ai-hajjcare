@@ -2,6 +2,7 @@ import { colors, radius, spacing, typography } from "@/constants/theme";
 import { supabase } from "@/lib/supabase";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { 
   ActivityIndicator, 
   Alert, 
@@ -15,6 +16,7 @@ import {
   Platform,
   Keyboard 
 } from "react-native";
+import { useHeaderHeight } from '@react-navigation/elements';
 
 export default function OtpVerification() {
   const router = useRouter();
@@ -77,110 +79,143 @@ export default function OtpVerification() {
     // الانتقال للصفحة الرئيسية
     router.replace("/home");
   };
-
+// دالة لإخفاء جزء من الإيميل لأسباب أمنية
+  const maskEmail = (emailText: string) => {
+    if (!emailText) return "";
+    const [name, domain] = emailText.split("@");
+    if (!domain) return emailText; // لو مو إيميل صالح رجعه زي ما هو
+    
+    // إذا كان الاسم قصير جداً
+    if (name.length <= 3) {
+      return `${name}***@${domain}`;
+    }
+    
+    // إظهار أول 3 حروف، وبعدها نجوم، وبعدها النطاق
+    const visibleStart = name.substring(0, 3);
+    return `${visibleStart}***@${domain}`;
+  };
+  const headerHeight = useHeaderHeight();
  return (
-   <KeyboardAvoidingView 
+    <KeyboardAvoidingView 
       behavior={Platform.OS === "ios" ? "padding" : "height"} 
+      keyboardVerticalOffset={Platform.OS === "ios" ? headerHeight : 0} 
       style={{ flex: 1, backgroundColor: colors.background }}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView 
-          contentContainerStyle={{
-            flexGrow: 1, 
-            justifyContent: "center", 
-            paddingHorizontal: spacing.lg 
+      <ScrollView 
+        contentContainerStyle={{
+          flexGrow: 1, 
+          justifyContent: "center", 
+          paddingTop: 60,
+          paddingHorizontal: spacing.lg 
+        }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* العنوان */}
+        <Text style={{
+            fontSize: typography.title.fontSize,
+            fontWeight: typography.title.fontWeight,
+            color: colors.textPrimary,
+            marginBottom: spacing.sm,
+            textAlign: "center",
           }}
-          keyboardShouldPersistTaps="handled"
         >
-          {/* العنوان */}
-          <Text style={{
-              fontSize: typography.title.fontSize,
-              fontWeight: typography.title.fontWeight,
-              color: colors.textPrimary,
-              marginBottom: spacing.sm,
-              textAlign: "center",
-            }}
-          >
-            Verification Code
-          </Text>
+          Verification Code
+        </Text>
 
-          <Text style={{
-              fontSize: typography.body.fontSize,
-              color: colors.textSecondary,
-              marginBottom: spacing.xl,
-              textAlign: "center",
-              lineHeight: 22,
-            }}
-          >
-            Please enter the verification code sent to{"\n"}
-            <Text style={{ fontWeight: "700", color: colors.textPrimary }}>
-              {email}
+        <Text style={{
+            fontSize: typography.body.fontSize,
+            color: colors.textSecondary,
+            marginBottom: spacing.xl,
+            textAlign: "center",
+            lineHeight: 22,
+          }}
+        >
+          Please enter the verification code sent to{"\n"}
+          <Text style={{ fontWeight: "700", color: colors.textPrimary }}>
+            {maskEmail(email as string)}
+          </Text>
+        </Text>
+
+        {/* حقل الإدخال */}
+        <TextInput
+          value={code}
+          onChangeText={setCode}
+          keyboardType="number-pad"
+          placeholder=" - - - - - - - -"
+          placeholderTextColor={colors.textSecondary}
+          maxLength={8}
+          style={{
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.textSecondary,
+            borderRadius: radius.md,
+            padding: spacing.lg,
+            fontSize: 17,
+            fontWeight: "600",
+            color: colors.textPrimary,
+            textAlign: "center",
+            marginBottom: spacing.xl,
+            letterSpacing: 8,
+          }}
+        />
+
+        {/* زر التحقق */}
+        <TouchableOpacity
+          onPress={verifyCode}
+          disabled={verifying || code.length < 6}
+          style={{
+            backgroundColor: colors.buttonPrimary,
+            paddingVertical: spacing.md,
+            borderRadius: radius.md,
+            alignItems: "center",
+            opacity: verifying || code.length < 6 ? 0.7 : 1,
+          }}
+        >
+          {verifying ? (
+            <ActivityIndicator color={colors.textOnPrimary} />
+          ) : (
+            <Text style={{
+                color: colors.textOnPrimary,
+                fontSize: typography.body.fontSize,
+                fontWeight: "600",
+              }}
+            >
+              Verify & Login
             </Text>
-          </Text>
+          )}
+        </TouchableOpacity>
 
-          {/* حقل الإدخال */}
-          <TextInput
-            value={code}
-            onChangeText={setCode}
-            keyboardType="number-pad"
-            placeholder="123456"
-            placeholderTextColor={colors.textSecondary}
-            maxLength={8}
-            style={{
-              backgroundColor: colors.background,
-              borderWidth: 1,
-              borderColor: colors.textSecondary,
-              borderRadius: radius.md,
-              padding: spacing.lg,
-              fontSize: 24,
-              fontWeight: "600",
-              color: colors.textPrimary,
-              textAlign: "center",
-              marginBottom: spacing.xl,
-              letterSpacing: 8,
-            }}
+        {/* زر العودة */}
+        <TouchableOpacity
+          onPress={() => router.replace("/login")}
+          disabled={verifying}
+          activeOpacity={0.6}
+          style={{ 
+            marginTop: spacing.lg, 
+            alignItems: "center",
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: spacing.sm,
+            paddingVertical: spacing.sm,
+            opacity: verifying ? 0.4 : 1,
+          }}
+        >
+          <Ionicons 
+            name="arrow-back-outline" 
+            size={20} 
+            color={colors.textSecondary} 
           />
-
-          {/* زر التحقق */}
-          <TouchableOpacity
-            onPress={verifyCode}
-            disabled={verifying || code.length < 6}
-            style={{
-              backgroundColor: colors.buttonPrimary,
-              paddingVertical: spacing.md,
-              borderRadius: radius.md,
-              alignItems: "center",
-              opacity: verifying || code.length < 6 ? 0.7 : 1,
-            }}
-          >
-            {verifying ? (
-              <ActivityIndicator color={colors.textOnPrimary} />
-            ) : (
-              <Text style={{
-                  color: colors.textOnPrimary,
-                  fontSize: typography.body.fontSize,
-                  fontWeight: "600",
-                }}
-              >
-                Verify & Login
-              </Text>
-            )}
-          </TouchableOpacity>
-
-          {/* زر العودة */}
-          <TouchableOpacity
-            onPress={() => router.back()}
-            disabled={verifying}
-            style={{ marginTop: spacing.lg, alignItems: "center" }}
-          >
-            <Text style={{ color: colors.textSecondary, fontSize: typography.body.fontSize }}>
-              Go Back
-            </Text>
-          </TouchableOpacity>
           
-        {/* ✅ إغلاق الوسوم بالترتيب الصحيح */}
-        </ScrollView>
-      </TouchableWithoutFeedback>
+          <Text style={{ 
+            color: colors.textSecondary, 
+            fontSize: typography.body.fontSize,
+            fontWeight: "600",
+          }}>
+            Go Back
+          </Text>
+        </TouchableOpacity>
+        
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }

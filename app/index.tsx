@@ -2,34 +2,30 @@ import { colors, radius, spacing, typography } from "@/constants/theme";
 import { supabase } from "@/lib/supabase"; // 1. استدعينا supabase
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react"; // 2. استدعينا الـ hooks
-import { ActivityIndicator, Text, TouchableOpacity, View } from "react-native"; // 3.  مؤشر التحميل
+import { Dimensions, ActivityIndicator, Text, View } from "react-native"; // 3.  مؤشر التحميل
+import LottieView from "lottie-react-native";
 
+const { width } = Dimensions.get("window");
 export default function Index() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true); // حالة تحميل عشان الشاشة ما ترمش
-
+  
   // ✅ هذا هو التعديل الوحيد: فحص الجلسة أول ما يفتح التطبيق
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setTimeout(() => {
       if (session) {
         // إذا مسجل دخول من قبل -> وديه الهوم فوراً
         router.replace("/home");
       } else {
         // إذا مو مسجل -> وقف التحميل واظهر الصفحة 
-        setLoading(false);
+       router.replace("/login");
       }
-    });
+      }, 5000); //اول ما يخلص الأنيميشن (5 ثواني) ممكن ننقصه
+    };
+
+    checkSession();
   }, []);
-
-  // شاشة تحميل بسيطة تطلع لأجزاء من الثانية أثناء الفحص
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <ActivityIndicator size="large" color={colors.buttonPrimary} />
-      </View>
-    );
-  }
-
  
   return (
     <View
@@ -39,36 +35,23 @@ export default function Index() {
         alignItems: "center",
         backgroundColor: colors.background,
       }}
-    >
-      <Text
-        style={{
-          fontSize: typography.title.fontSize,
-          fontWeight: typography.title.fontWeight,
-          marginBottom: spacing.xl,
-          color: colors.textPrimary,
-        }}
-      >
-        Welcome to Ai HajjCare
+    >{/* مشغل الأنيميشن */}
+      <LottieView
+        source={require('@/assets/splash.json')}
+        autoPlay
+        loop
+        style={{ width: 300, height: 300 }}
+      />
+  
+      <Text style={{ 
+        marginTop: 60, 
+        fontSize: 28, 
+        fontWeight: "bold", 
+        color: colors.textPrimary,
+        letterSpacing: 1 
+      }}>
+        AI HajjCare
       </Text>
-      <TouchableOpacity
-        style={{
-          backgroundColor: colors.buttonPrimary,
-          paddingVertical: spacing.md,
-          paddingHorizontal: spacing.xl,
-          borderRadius: radius.md,
-        }}
-        onPress={() => router.push("./login")}
-      >
-        <Text
-          style={{
-            color: colors.textOnPrimary,
-            fontSize: typography.body.fontSize,
-            fontWeight: "600",
-          }}
-        >
-          SignIn
-        </Text>
-      </TouchableOpacity>
     </View>
   );
 }

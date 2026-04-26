@@ -104,20 +104,19 @@ export default function HomeScreen() {
       marginTop: spacing.xxl, 
       marginBottom: spacing.xl
     }}>
-      <Text style={{ ...typography.title, color: colors.textPrimary, fontSize: 26, fontWeight: "900" }}>
+      <Text style={{ ...typography.title, color: colors.textPrimary, fontSize: 29, fontWeight: "900" }}>
         AI HajjCare
       </Text>
 
       {/* تجمع أيقونة البروفايل والخروج معاً لتفادي التعارض البصري */}
       <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-        {/* زر البروفايل حق صاحبتك - مربوط بصفحة البروفايل */}
-        <TouchableOpacity onPress={() => router.push("/profile")}>
-          <Ionicons name="person-circle-outline" size={32} color={colors.primary} />
-        </TouchableOpacity>
+          {/* أيقونة زر الترجمة نضيفها لاحقاً لما نضيف خاصية اللغات، حالياً مجرد ديكور */}
+          <Ionicons name="globe-outline" size={32} color={colors.primary} />
+        
 
         {/* زر تسجيل الخروج حقك */}
         <TouchableOpacity onPress={handleLogout} style={{ padding: spacing.xs }}>
-          <Ionicons name="log-out-outline" size={28} color={colors.buttonDanger} />
+          <Ionicons name="log-out-outline" size={32} color={colors.buttonDanger} />
         </TouchableOpacity>
       </View>
     </View>

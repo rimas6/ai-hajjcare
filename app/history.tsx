@@ -55,7 +55,7 @@ export default function HistoryScreen() {
     switch (severity) {
       case "High":   return { color: colors.severity.emergency, icon: "alert-circle" };
       case "Medium": return { color: colors.severity.moderate, icon: "warning" };
-      case "Low":    return { color: colors.severity.normal, icon: "checkmark-circle" };
+      case "Low":    return { color: colors.severity.low, icon: "checkmark-circle" };
       default:       return { color: colors.textMuted, icon: "help-circle" };
     }
   };

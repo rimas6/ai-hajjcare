@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { Linking, ScrollView, Text, TouchableOpacity, View, StyleSheet} from "react-native";
+import {
+  Linking,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+} from "react-native";
 import Header from "../components/Header";
 import { supabase } from "@/lib/supabase";
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
@@ -11,9 +18,10 @@ const SEVERITY_CONFIG = {
     color: colors.severity.high,
     bgColor: "#fef2f2",
     icon: "alert-circle" as const,
-    title: "⚠️ Critical Condition",
+    title: "Critical Condition",
     subtitle: "Call Emergency?",
-    description: "Your symptoms indicate a medical emergency that requires immediate attention. Do not delay — go to the nearest hospital or medical center now.",
+    description:
+      "Your symptoms indicate a medical emergency that requires immediate attention. Do not delay — go to the nearest hospital or medical center now.",
     action: "🏥 Get Help Now",
     actionColor: colors.severity.high,
     type: "Hospital",
@@ -24,7 +32,8 @@ const SEVERITY_CONFIG = {
     icon: "warning" as const,
     title: "Medium Condition",
     subtitle: "See a doctor soon",
-    description: "Your condition requires medical attention as soon as possible. Do not ignore your symptoms — visit the nearest clinic or medical center.",
+    description:
+      "Your condition requires medical attention as soon as possible. Do not ignore your symptoms — visit the nearest clinic or medical center.",
     action: "Find Nearby Hospitals",
     actionColor: colors.severity.moderate,
     type: "PHCC",
@@ -33,9 +42,10 @@ const SEVERITY_CONFIG = {
     color: colors.severity.low,
     bgColor: "#f0fdf4",
     icon: "checkmark-circle" as const,
-    title: "✅ Mild Condition",
+    title: "Mild Condition",
     subtitle: "Rest is sufficient",
-    description: "Your symptoms are mild and not a cause for concern. Make sure to rest and stay hydrated. If symptoms worsen, consult a doctor.",
+    description:
+      "Your symptoms are mild and not a cause for concern. Make sure to rest and stay hydrated. If symptoms worsen, consult a doctor.",
     action: undefined,
     actionColor: undefined,
     type: "PHCC",
@@ -46,7 +56,8 @@ const SEVERITY_CONFIG = {
     icon: "help-circle" as const,
     title: "❓ Insufficient Data",
     subtitle: "Please enter more symptoms",
-    description: "The symptoms provided were not enough to determine the severity accurately. Please enter at least 3 symptoms.",
+    description:
+      "The symptoms provided were not enough to determine the severity accurately. Please enter at least 3 symptoms.",
     action: "🔄 Try Again",
     actionColor: colors.severity.insufficientData,
     type: "PHCC",
@@ -67,7 +78,9 @@ export default function ResultScreen() {
   const severity = params.severity || "Insufficient";
   const confidence = parseFloat(params.confidence || "0");
   const symptoms = params.symptoms ? params.symptoms.split(",") : [];
-  const config = SEVERITY_CONFIG[severity as keyof typeof SEVERITY_CONFIG] || SEVERITY_CONFIG.Insufficient;
+  const config =
+    SEVERITY_CONFIG[severity as keyof typeof SEVERITY_CONFIG] ||
+    SEVERITY_CONFIG.Insufficient;
 
   const hasSaved = useRef(false);
 
@@ -76,41 +89,64 @@ export default function ResultScreen() {
       if (severity === "Insufficient" || hasSaved.current) return;
       hasSaved.current = true;
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
-        const { data: pilgrim } = await supabase.from("pilgrims").select("id").eq("user_id", user.id).single();
+        const { data: pilgrim } = await supabase
+          .from("pilgrims")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
         if (!pilgrim) return;
 
-        const { data: session } = await supabase.from("analysis_sessions").insert({
-          pilgrim_id: pilgrim.id,
-          input_method: params.input_method || "unknown",
-          severity_result: severity,
-          confidence_score: confidence,
-          decided_by: params.decided_by || "model",
-          reason: params.reason || ""
-        }).select().single();
+        const { data: session } = await supabase
+          .from("analysis_sessions")
+          .insert({
+            pilgrim_id: pilgrim.id,
+            input_method: params.input_method || "unknown",
+            severity_result: severity,
+            confidence_score: confidence,
+            decided_by: params.decided_by || "model",
+            reason: params.reason || "",
+          })
+          .select()
+          .single();
 
         if (session && symptoms.length > 0) {
-          const symptomsData = symptoms.map(symp => ({ session_id: session.id, symptom_name: symp.trim() }));
+          const symptomsData = symptoms.map((symp) => ({
+            session_id: session.id,
+            symptom_name: symp.trim(),
+          }));
           await supabase.from("session_symptoms").insert(symptomsData);
         }
-      } catch (error) { console.error("Database Save Error:", error); }
+      } catch (error) {
+        console.error("Database Save Error:", error);
+      }
     };
     saveToDatabase();
   }, [severity]);
 
- return (
+  return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        
         {/* Unified Header Component */}
         <Header title="Analysis Results" />
 
         {/* Severity Status Card */}
-        <View style={[styles.statusCard, { backgroundColor: config.bgColor, borderColor: config.color }]}>
+        <View
+          style={[
+            styles.statusCard,
+            { backgroundColor: config.bgColor, borderColor: config.color },
+          ]}
+        >
           <Ionicons name={config.icon} size={64} color={config.color} />
-          <Text style={[styles.statusTitle, { color: config.color }]}>{config.title}</Text>
-          <Text style={[styles.statusSubtitle, { color: config.color }]}>{config.subtitle}</Text>
+          <Text style={[styles.statusTitle, { color: config.color }]}>
+            {config.title}
+          </Text>
+          <Text style={[styles.statusSubtitle, { color: config.color }]}>
+            {config.subtitle}
+          </Text>
         </View>
 
         {/* Recommendation Section */}
@@ -125,7 +161,12 @@ export default function ResultScreen() {
             style={styles.emergencyButton}
             onPress={() => Linking.openURL("tel:911")}
           >
-            <Ionicons name="call" size={24} color="#fff" style={styles.buttonIcon} />
+            <Ionicons
+              name="call"
+              size={24}
+              color="#fff"
+              style={styles.buttonIcon}
+            />
             <Text style={styles.emergencyButtonText}>Call Emergency 911</Text>
           </TouchableOpacity>
         )}
@@ -133,23 +174,46 @@ export default function ResultScreen() {
         {/* Primary Action Button */}
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => router.push({ pathname: "/FacilitiesScreen" as any, params: { type: config.type, severity: severity } })}
+          onPress={() =>
+            router.push({
+              pathname: "/FacilitiesScreen" as any,
+              params: { type: config.type, severity: severity },
+            })
+          }
         >
-          <Ionicons name="location" size={24} color="#fff" style={styles.buttonIcon} />
-          <Text style={styles.actionButtonText}>Find Nearest {config.type}</Text>
+          <Ionicons
+            name="location"
+            size={24}
+            color="#fff"
+            style={styles.buttonIcon}
+          />
+          <Text style={styles.actionButtonText}>
+            Find Nearest {config.type}
+          </Text>
         </TouchableOpacity>
+        <View style={styles.secondaryActionsContainer}></View>
+        {/* Secondary Actions Row */}
+        <View style={styles.secondaryActionsContainer}>
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => router.push("/symptom-screen")}
+          >
+            <Ionicons name="refresh-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.secondaryBtnText}>New Analysis</Text>
+          </TouchableOpacity>
 
-        {/* Retry Analysis Button */}
-        <TouchableOpacity
-          style={styles.newAnalysisButton}
-          onPress={() => router.push("/symptom-screen")}
-        >
-          <Text style={styles.newAnalysisText}>🔄 New Analysis</Text>
-        </TouchableOpacity>
-
+          <TouchableOpacity
+            style={styles.secondaryBtn}
+            onPress={() => router.replace("/home")}
+          >
+            <Ionicons name="home-outline" size={20} color={colors.textSecondary} />
+            <Text style={styles.secondaryBtnText}>Home</Text>
+          </TouchableOpacity>
+        </View>
         {/* Disclaimer Note */}
         <Text style={styles.disclaimerText}>
-          ⚠️ This app is for assistance only and does not replace professional medical advice.
+          ⚠️ This app is for assistance only and does not replace professional
+          medical advice.
         </Text>
       </ScrollView>
     </View>
@@ -161,101 +225,112 @@ export default function ResultScreen() {
 // ==========================================
 const styles = StyleSheet.create({
   container: {
-    flex: 1, 
-    backgroundColor: colors.background
+    flex: 1,
+    backgroundColor: colors.background,
   },
   scrollContent: {
-    padding: spacing.lg, 
-    paddingBottom: spacing.xxl
+    padding: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   statusCard: {
-    borderRadius: radius.xl, 
-    padding: spacing.xl, 
-    alignItems: "center", 
-    marginBottom: spacing.xl, 
-    borderWidth: 2, 
-    ...shadow.card
+    borderRadius: radius.xl,
+    padding: spacing.xl,
+    alignItems: "center",
+    marginBottom: spacing.xl,
+    borderWidth: 2,
+    ...shadow.card,
   },
   statusTitle: {
-    fontSize: 26, 
-    fontWeight: "900", 
-    marginTop: spacing.md, 
-    textAlign: "center"
+    fontSize: 26,
+    fontWeight: "900",
+    marginTop: spacing.md,
+    textAlign: "center",
   },
   statusSubtitle: {
-    fontSize: 16, 
-    fontWeight: "600", 
-    marginTop: spacing.xs
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: spacing.xs,
   },
   recommendationCard: {
-    backgroundColor: colors.card, 
-    borderRadius: radius.lg, 
-    padding: spacing.lg, 
-    marginBottom: spacing.lg, 
-    ...shadow.card
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.lg,
+    ...shadow.card,
   },
   recommendationTitle: {
-    ...typography.subtitle, 
-    fontWeight: "700", 
-    color: colors.textPrimary, 
-    marginBottom: spacing.sm
+    ...typography.subtitle,
+    fontWeight: "700",
+    color: colors.textPrimary,
+    marginBottom: spacing.sm,
   },
   recommendationText: {
-    ...typography.body, 
-    color: colors.textSecondary, 
-    lineHeight: 24
+    ...typography.body,
+    color: colors.textSecondary,
+    lineHeight: 24,
   },
   emergencyButton: {
-    backgroundColor: "#ef4444", 
-    borderRadius: radius.md, 
-    padding: spacing.lg, 
-    alignItems: "center", 
-    justifyContent: "center", 
-    marginBottom: spacing.md, 
-    flexDirection: "row", 
-    ...shadow.floating
+    backgroundColor: "#ef4444",
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    flexDirection: "row",
+    ...shadow.floating,
   },
   emergencyButtonText: {
-    ...typography.body, 
-    fontWeight: "700", 
-    color: "#fff", 
-    fontSize: 18
+    ...typography.body,
+    fontWeight: "700",
+    color: "#fff",
+    fontSize: 18,
   },
   actionButton: {
-    backgroundColor: colors.primary, 
-    borderRadius: radius.md, 
-    padding: spacing.lg, 
-    alignItems: "center", 
-    justifyContent: "center", 
-    marginBottom: spacing.lg, 
-    flexDirection: "row", 
-    ...shadow.floating
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    padding: spacing.lg,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+    flexDirection: "row",
+    ...shadow.floating,
   },
   actionButtonText: {
-    ...typography.body, 
-    fontWeight: "700", 
-    color: "#fff", 
-    fontSize: 18
+    ...typography.body,
+    fontWeight: "700",
+    color: "#fff",
+    fontSize: 18,
   },
   buttonIcon: {
-    marginRight: 10
+    marginRight: 10,
   },
-  newAnalysisButton: {
-    borderRadius: radius.md, 
-    padding: spacing.md, 
-    alignItems: "center", 
-    borderWidth: 1, 
-    borderColor: colors.divider
+  secondaryActionsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: spacing.md, 
+    marginBottom: spacing.lg,
   },
-  newAnalysisText: {
-    color: colors.textSecondary, 
-    fontWeight: "600"
+  secondaryBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 8,
+    borderRadius: radius.md,
+    backgroundColor: "#f3f4f6",
+  },
+  secondaryBtnText: {
+    color: colors.textSecondary,
+    fontWeight: "600",
+    marginLeft: 8,
+    fontSize: 16,
   },
   disclaimerText: {
-    ...typography.caption, 
-    color: colors.textMuted, 
-    textAlign: "center", 
-    marginTop: spacing.xl, 
-    lineHeight: 18
-  }
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: "center",
+    marginTop: spacing.xl,
+    lineHeight: 18,
+  },
 });

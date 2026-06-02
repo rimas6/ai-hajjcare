@@ -19,9 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors, radius, shadow, spacing, typography } from "@/constants/theme";
 
-// ────────────────────── API URL ──────────────────────────────────
-const API_URL = "https://ai-hajjcare-api.onrender.com";
-// ─────────────────────────────────────────────────────────────────
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type Message = {
   id: string;
